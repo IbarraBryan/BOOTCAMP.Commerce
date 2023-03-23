@@ -8,6 +8,8 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Order.Service.Queries.Interfaces;
 using Order.Service.Queries.Services;
+using Order.Service.Proxies;
+using Order.Service.Proxies.Catalog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,12 @@ builder.Services.AddTransient<IOrderQueryService, OrderQueryService>();
 
 // Event Handlers
 builder.Services.AddMediatR(Assembly.Load("Order.Service.EventHandlers"));
+
+// ApiUrls
+builder.Services.Configure<ApiUrls>(opts => builder.Configuration.GetSection("ApiUrls").Bind(opts));
+
+// Proxies
+builder.Services.AddHttpClient<ICatalogProxy, CatalogProxy>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -1,10 +1,6 @@
-﻿
-using MediatR;
-using static Catalog.Common.Enums;
-
-namespace Catalog.Service.EventHandlers.Commands
+﻿namespace Order.Service.Proxies.Catalog.Commands
 {
-    public class ProductInStockUpdateStockCommand : INotification
+    public class ProductInStockUpdateStockCommand
     {
         public IEnumerable<ProductInStockUpdateItem> Items { get; set; } = new List<ProductInStockUpdateItem>();
     }
@@ -14,5 +10,11 @@ namespace Catalog.Service.EventHandlers.Commands
         public int ProductId { get; set; }
         public int Stock { get; set; }
         public ProductInStockAction Action { get; set; }
+    }
+
+    public enum ProductInStockAction
+    {
+        Add,
+        Substract
     }
 }
