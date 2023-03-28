@@ -1,38 +1,56 @@
-using Catalog.Persistence.Database;
-using Catalog.Service.Queries.Interfaces;
-using Catalog.Service.Queries.Services;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using System.Reflection;
-using Common.Logging;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
+using Identity.Persistence.Database;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Common.Logging;
+using Identity.Service.Queries.Interfaces;
+using Identity.Service.Queries.Services;
+using Identity.Domain;
+using Microsoft.AspNetCore.Identity;
+using MediatR;
+using System.Reflection;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
+
 // DbContext
-builder.Services.AddDbContext<CatalogDbContext>(
+builder.Services.AddDbContext<IdentityDBContext>(
 options => options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        x => x.MigrationsHistoryTable("__EFMigrationsHistory", "Catalog")
+        x => x.MigrationsHistoryTable("__EFMigrationsHistory", "Identity")
     )
 );
 
 // Health check
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy())
-    .AddDbContextCheck<CatalogDbContext>(typeof(CatalogDbContext).Name);
+    .AddDbContextCheck<IdentityDBContext>(typeof(IdentityDBContext).Name);
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+    .AddEntityFrameworkStores<IdentityDBContext>()
+    .AddDefaultTokenProviders();
+
+// Identity Configuration
+builder.Services.Configure<IdentityOptions>(options => {
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequiredUniqueChars = 1;
+});
 
 // Event Handlers
-builder.Services.AddMediatR(Assembly.Load("Catalog.Service.EventHandlers"));
+builder.Services.AddMediatR(Assembly.Load("Identity.Service.EventHandlers"));
 
 // Query Services
-builder.Services.AddTransient<IProductQueryService, ProductQueryService>();
-//builder.Services.AddTransient<IProductInStockQueryService, ProductInStockQueryService>();
+builder.Services.AddTransient<IUserQueryService, UserQueryService>();
 
 // API Controllers
 builder.Services.AddControllers();
@@ -58,6 +76,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -78,7 +98,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints => { 
+app.UseEndpoints(endpoints => {
     endpoints.MapControllers();
     endpoints.MapHealthChecks("/hc", new HealthCheckOptions()
     {

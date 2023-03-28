@@ -2,11 +2,14 @@
 using Catalog.Service.Queries.DTOs;
 using Catalog.Service.Queries.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Common.Collection;
 
 namespace Catalog.Api.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("v1/products")]
     [ApiController]
     public class ProductController : ControllerBase
