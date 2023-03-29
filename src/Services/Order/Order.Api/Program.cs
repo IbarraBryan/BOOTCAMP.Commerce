@@ -10,12 +10,11 @@ using Order.Service.Queries.Interfaces;
 using Order.Service.Queries.Services;
 using Order.Service.Proxies;
 using Order.Service.Proxies.Catalog;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-
-builder.Services.AddControllers();
 
 // DbContext
 builder.Services.AddDbContext<OrderDbContext>(
@@ -30,11 +29,31 @@ builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy())
     .AddDbContextCheck<OrderDbContext>(typeof(OrderDbContext).Name);
 
+// Event Handlers
+builder.Services.AddMediatR(Assembly.Load("Order.Service.EventHandlers"));
+
 // Query Services
 builder.Services.AddTransient<IOrderQueryService, OrderQueryService>();
 
-// Event Handlers
-builder.Services.AddMediatR(Assembly.Load("Order.Service.EventHandlers"));
+// API Controllers
+builder.Services.AddControllers();
+
+// Add Authetication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
 
 // ApiUrls
 builder.Services.Configure<ApiUrls>(opts => builder.Configuration.GetSection("ApiUrls").Bind(opts));
@@ -60,9 +79,11 @@ loggerFactory.AddSyslog(
                     builder.Configuration.GetValue<string>("Papertrail:host"),
                     builder.Configuration.GetValue<int>("Papertrail:port"));
 
-app.UseAuthorization();
-
 app.UseRouting();
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseEndpoints(endpoints => {
     endpoints.MapControllers();

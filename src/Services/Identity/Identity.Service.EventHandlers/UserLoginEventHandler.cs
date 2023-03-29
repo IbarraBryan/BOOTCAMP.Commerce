@@ -67,7 +67,7 @@ namespace Identity.Service.EventHandlers
                 _configuration["Jwt:Issuer"],
                 _configuration["Jwt:Audience"],
                 claims,
-                expires: DateTime.Now.AddMinutes(60),
+                expires: DateTime.Now.AddMinutes(5),
                 signingCredentials: credentials);
 
             _access.AccessToken = new JwtSecurityTokenHandler().WriteToken(token);

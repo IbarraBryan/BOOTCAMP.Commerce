@@ -2,12 +2,15 @@
 using Customer.Service.Queries.DTOs;
 using Customer.Service.Queries.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Common.Collection;
 
 namespace Customer.Api.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("v1/clients")]
     [ApiController]
     public class ClientController : ControllerBase
