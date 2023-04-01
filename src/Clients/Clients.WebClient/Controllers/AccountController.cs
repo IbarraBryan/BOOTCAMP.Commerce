@@ -39,5 +39,12 @@ namespace Clients.WebClient.Controllers
 
             return Redirect("~/");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Redirect("~/");
+        }
     }
 }

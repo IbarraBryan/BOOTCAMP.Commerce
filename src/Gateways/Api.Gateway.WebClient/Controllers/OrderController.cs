@@ -23,9 +23,35 @@ namespace Api.Gateway.WebClient.Controllers
             _customerProxy = customerProxy;
             _catalogProxy = catalogProxy;
         }
-
+        /// <summary>
+        /// Este método no necesita traer la información de los productos porque lo usaremos para solo mostrar
+        /// las cabeceras en el listado. RECUERDA: que este API Gateway alimenta a nuestro Web.Client - El backend de nuestro frontend
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="take"></param>
+        /// <returns></returns>
         [HttpGet]
-        public async Task<DataCollection<OrderDto>> GetAll(int page, int take) => await _orderProxy.GetPagedAsync(page, take);
+        public async Task<DataCollection<OrderDto>> GetAll(int page, int take)
+        {
+            var result = await _orderProxy.GetPagedAsync(page, take);
+            if (result.HasItems)
+            {
+                // Retrieve client ids
+                var clientIds = result.Items
+                    .Select(x => x.ClientId)
+                    .GroupBy(g => g)
+                    .Select(x => x.Key).ToList();
+
+                var clients = await _customerProxy.GetPagedAsync(1, clientIds.Count(), clientIds);
+
+                foreach (var order in result.Items)
+                {
+                    order.Client = clients.Items.Single(x => x.ClientId == order.ClientId);
+                }
+            }
+
+            return result;
+        }
 
         [HttpGet("{id}")]
         public async Task<OrderDto> Get(int id)

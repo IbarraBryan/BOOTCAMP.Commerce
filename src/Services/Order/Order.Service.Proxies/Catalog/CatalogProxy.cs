@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Order.Service.Proxies.Catalog.Commands;
 using System.Text;
@@ -16,8 +17,9 @@ namespace Order.Service.Proxies.Catalog
         private readonly ApiUrls _apiUrls;
         private readonly HttpClient _httpClient;
 
-        public CatalogProxy(IOptions<ApiUrls> apiUrls, HttpClient httpClient)
+        public CatalogProxy(IOptions<ApiUrls> apiUrls, HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
+            httpClient.AddBearerToken(httpContextAccessor);
             _apiUrls = apiUrls.Value;
             _httpClient = httpClient;
         }

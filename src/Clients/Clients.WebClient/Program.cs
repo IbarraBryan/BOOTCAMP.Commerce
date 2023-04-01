@@ -1,6 +1,19 @@
+using Api.Gateway.WebClient.Proxy;
+using Api.Gateway.WebClient.Proxy.Config;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options => {
+    options.AddDefaultPolicy(policy => { policy.WithOrigins("http://localhost"); });
+});
+// Proxies
+builder.Services.AddSingleton(new ApiGatewayUrl(builder.Configuration.GetValue<string>("ApiGatewayUrl")));
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient<IOrderProxy, OrderProxy>();
+builder.Services.AddHttpClient<IProductProxy, ProductProxy>();
+builder.Services.AddHttpClient<IClientProxy, ClientProxy>();
 
 // Razor Pages & MVC
 builder.Services.AddRazorPages();
@@ -20,6 +33,8 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseCors();
 
 app.UseAuthorization();
 app.UseAuthentication();

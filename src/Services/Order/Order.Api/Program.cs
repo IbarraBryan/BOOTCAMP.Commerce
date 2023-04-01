@@ -16,6 +16,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
 // DbContext
 builder.Services.AddDbContext<OrderDbContext>(
 options => options.UseSqlServer(
